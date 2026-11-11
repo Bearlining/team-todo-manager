@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>团队待办 · 登录</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body class="auth-body">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <div class="auth-logo-mk">📋</div>
+      </div>
+      <h1 class="auth-title">团队待办管理</h1>
+      <p class="auth-sub">Team To-Do Manager</p>
+
+      <!-- 标签切换：登录 / 注册 -->
+      <div class="auth-tabs">
+        <button class="auth-tab on" data-tab="login" type="button">登录</button>
+        <button class="auth-tab" data-tab="register" type="button">注册</button>
+      </div>
+
+      <!-- 登录表单 -->
+      <form id="loginForm" class="auth-form" data-panel="login">
+        <div class="form-group">
+          <label class="form-label">工号</label>
+          <input type="text" class="form-input" name="employee_id" placeholder="请输入工号" autocomplete="username" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">密码</label>
+          <input type="password" class="form-input" name="password" placeholder="请输入密码" autocomplete="current-password" />
+        </div>
+        <button type="submit" class="btn btn-block">登 录</button>
+      </form>
+
+      <!-- 注册表单 -->
+      <form id="registerForm" class="auth-form" data-panel="register" style="display:none">
+        <div class="form-group">
+          <label class="form-label">工号</label>
+          <input type="text" class="form-input" name="employee_id" placeholder="请输入工号" autocomplete="username" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">姓名</label>
+          <input type="text" class="form-input" name="name" placeholder="请输入姓名" autocomplete="name" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">密码</label>
+          <input type="password" class="form-input" name="password" placeholder="至少 4 位" autocomplete="new-password" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">确认密码</label>
+          <input type="password" class="form-input" name="password2" placeholder="再次输入密码" autocomplete="new-password" />
+        </div>
+        <button type="submit" class="btn btn-block">注 册</button>
+      </form>
+
+      <div class="auth-msg" id="authMsg"></div>
+    </div>
+    <p class="auth-foot">首次使用请注册 · 内网环境使用</p>
+  </div>
+
+  <script>
+    // 登录注册逻辑（本页独立运行，不加载 app.js，避免 init 在 /login 反复跳转而卡死）
+    const authMsg = document.getElementById('authMsg');
+    let currentTab = 'login';
+
+    function showAuthMsg(msg, isError) {
+      authMsg.textContent = msg;
+      authMsg.style.display = msg ? 'block' : 'none';
+      authMsg.style.color = isError ? 'var(--doc-red)' : 'var(--doc-green)';
+    }
+
+    function switchTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.auth-tab').forEach(el => {
+        el.classList.toggle('on', el.dataset.tab === tab);
+      });
+      document.querySelectorAll('.auth-form').forEach(el => {
+        el.style.display = el.dataset.panel === tab ? 'block' : 'none';
+      });
+      showAuthMsg('');
+    }
+
+    document.querySelectorAll('.auth-tab').forEach(el => {
+      el.addEventListener('click', () => switchTab(el.dataset.tab));
+    });
+
+    document.getElementById('loginForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const fd = new FormData(this);
+      const payload = { employee_id: fd.get('employee_id'), password: fd.get('password') };
+      const btn = this.querySelector('button[type=submit]');
+      btn.disabled = true; btn.textContent = '登录中...';
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+          window.location.href = '/';
+        } else {
+          showAuthMsg(data.message || '登录失败', true);
+        }
+      } catch (err) {
+        showAuthMsg('网络错误，请重试', true);
+      } finally {
+        btn.disabled = false; btn.textContent = '登 录';
+      }
+    });
+
+    document.getElementById('registerForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const fd = new FormData(this);
+      const pw = fd.get('password'), pw2 = fd.get('password2');
+      if (pw !== pw2) { showAuthMsg('两次输入的密码不一致', true); return; }
+      const payload = { employee_id: fd.get('employee_id'), name: fd.get('name'), password: pw };
+      const btn = this.querySelector('button[type=submit]');
+      btn.disabled = true; btn.textContent = '注册中...';
+      try {
+        const res = await fetch('/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+          window.location.href = '/';
+        } else {
+          showAuthMsg(data.message || '注册失败', true);
+        }
+      } catch (err) {
+        showAuthMsg('网络错误，请重试', true);
+      } finally {
+        btn.disabled = false; btn.textContent = '注 册';
+      }
+    });
+  </script>
+</body>
+</html>

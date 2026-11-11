@@ -1,0 +1,28 @@
+# 数据库（含用户数据，绝不能提交）
+*.db
+*.db-wal
+*.db-shm
+todo.db
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# 便携版运行时（体积大，用 git-lfs 或走 Release）
+runtime/
+python-*-embed-amd64.zip
+*便携版.zip
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# 日志
+*.log

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>团队待办管理</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <!-- 顶栏 -->
+  <header class="top">
+    <div class="topbar">
+      <a class="logo" href="/">
+        <span class="mk">📋</span>
+        <span class="txt">团队待办管理</span>
+      </a>
+      <nav class="topnav">
+        <a href="#todo" class="tab-btn on" data-view="todo"><span class="ti">📝</span>我的待办</a>
+        <a href="#mycal" class="tab-btn" data-view="mycal"><span class="ti">🗓️</span>个人月历</a>
+        <a href="#calendar" class="tab-btn" data-view="calendar"><span class="ti">👥</span>部门月历</a>
+        <a href="#settings" class="tab-btn" data-view="settings"><span class="ti">⚙️</span>设置</a>
+      </nav>
+      <div class="top-right">
+        <span class="user-chip" id="userChip"></span>
+        <button class="btn btn-ghost btn-sm" id="logoutBtn" type="button">退出</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- 到期提醒条 -->
+    <div class="alert-bar" id="remindBar">
+      <span class="ic">⏰</span>
+      <div class="body">
+        <b id="remindTitle">有待办需要处理</b>
+        <div class="items" id="remindItems"></div>
+      </div>
+      <button class="alert-close" id="remindClose" type="button" aria-label="关闭">×</button>
+    </div>
+
+    <!-- ===== 视图一：我的待办 ===== -->
+    <section class="view on" id="view-todo">
+      <div class="stats">
+        <div class="stat s1"><div class="num" id="stPending">0</div><div class="lbl">待完成</div></div>
+        <div class="stat s2"><div class="num" id="stDone">0</div><div class="lbl">已完成</div></div>
+        <div class="stat s3"><div class="num" id="stDue">0</div><div class="lbl">3天内到期</div></div>
+        <div class="stat s4"><div class="num" id="stSync">0</div><div class="lbl">已同步月历</div></div>
+      </div>
+
+      <div class="toolbar">
+        <div class="left">
+          <div class="filters" id="filterRow">
+            <button class="filter-pill on" data-cat="" type="button">全部</button>
+          </div>
+          <div class="seg" id="statusSeg">
+            <button data-status="pending" class="on" type="button">未完成</button>
+            <button data-status="done" type="button">已完成</button>
+            <button data-status="all" type="button">全部</button>
+          </div>
+        </div>
+        <div class="right">
+          <button class="btn btn-ghost btn-sm" id="exportBtn" type="button">⬇ 导出CSV</button>
+          <button class="btn btn-sm" id="addTodoBtn" type="button">＋ 新建待办</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>待办名称</th>
+              <th>分类</th>
+              <th>开始 → 截止</th>
+              <th>月历</th>
+              <th style="width:84px">操作</th>
+            </tr>
+          </thead>
+          <tbody id="todoBody"></tbody>
+        </table>
+        <div class="empty-state" id="emptyState" style="display:none">
+          <div class="big">📭</div>
+          <p>暂无待办，点击右上角「＋ 新建待办」开始记录吧</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 视图二：个人月历 ===== -->
+    <section class="view" id="view-mycal">
+      <div class="cal-toolbar">
+        <div class="cal-nav">
+          <button class="nav-btn" id="mycalPrev" type="button">‹</button>
+          <div class="cal-title" id="mycalTitle"></div>
+          <button class="nav-btn" id="mycalNext" type="button">›</button>
+          <button class="btn btn-outline btn-sm" id="mycalToday" type="button">今天</button>
+        </div>
+        <div class="cal-opts">
+          <div class="seg" id="mycalSeg">
+            <button data-mode="month" class="on" type="button">月</button>
+            <button data-mode="week" type="button">周</button>
+          </div>
+          <label class="gantt-toggle">
+            <input type="checkbox" id="mycalGantt" />
+            <span class="switch"></span>
+            <span>甘特图</span>
+          </label>
+        </div>
+      </div>
+      <div class="cal-grid" id="mycalGrid">
+        <div class="cal-weekdays">
+          <div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div><div>日</div>
+        </div>
+        <div class="cal-body" id="mycalBody"></div>
+      </div>
+    </section>
+
+    <!-- ===== 视图三：部门月历 ===== -->
+    <section class="view" id="view-calendar">
+      <div class="cal-toolbar">
+        <div class="cal-nav">
+          <button class="nav-btn" id="calPrev" type="button">‹</button>
+          <div class="cal-title" id="calTitle"></div>
+          <button class="nav-btn" id="calNext" type="button">›</button>
+          <button class="btn btn-outline btn-sm" id="calToday" type="button">今天</button>
+        </div>
+        <div class="cal-opts">
+          <div class="seg" id="calSeg">
+            <button data-mode="month" class="on" type="button">月</button>
+            <button data-mode="week" type="button">周</button>
+          </div>
+          <label class="gantt-toggle">
+            <input type="checkbox" id="ganttToggle" />
+            <span class="switch"></span>
+            <span>甘特图</span>
+          </label>
+        </div>
+      </div>
+      <div class="cal-grid" id="calGrid">
+        <div class="cal-weekdays">
+          <div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div><div>日</div>
+        </div>
+        <div class="cal-body" id="calBody"></div>
+      </div>
+      <div class="cal-legend" id="calLegend"></div>
+      <div class="cal-status-legend">
+        <span class="cl-item"><span class="dot green"></span>已完成</span>
+        <span class="cl-item"><span class="dot red"></span>未完成</span>
+      </div>
+    </section>
+
+    <!-- ===== 视图四：设置 ===== -->
+    <section class="view" id="view-settings">
+      <div class="settings">
+        <!-- 修改密码 -->
+        <div class="set-card">
+          <h3>🔑 修改密码</h3>
+          <p class="desc">使用你的工号登录后，可在此修改密码。建议至少 6 位。</p>
+          <form id="pwdForm">
+            <div class="form-group">
+              <label class="form-label">原密码</label>
+              <input type="password" class="form-input" name="old_pwd" placeholder="请输入原密码" autocomplete="current-password" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">新密码</label>
+              <input type="password" class="form-input" name="new_pwd" placeholder="至少 6 位" autocomplete="new-password" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">确认新密码</label>
+              <input type="password" class="form-input" name="new_pwd2" placeholder="再次输入新密码" autocomplete="new-password" required />
+            </div>
+            <button type="submit" class="btn btn-sm">保存新密码</button>
+          </form>
+        </div>
+
+        <!-- 主题切换 -->
+        <div class="set-card">
+          <h3>🎨 界面风格</h3>
+          <p class="desc">选择适合你的配色方案，自动保存到本机。</p>
+          <div class="theme-grid" id="themeGrid">
+            <div class="theme-opt on" data-theme="blue"><div class="theme-swatch blue"></div><div class="tname">经典蓝</div></div>
+            <div class="theme-opt" data-theme="green"><div class="theme-swatch green"></div><div class="tname">青绿</div></div>
+            <div class="theme-opt" data-theme="warm"><div class="theme-swatch warm"></div><div class="tname">暖米</div></div>
+            <div class="theme-opt" data-theme="dark"><div class="theme-swatch dark"></div><div class="tname">深色护眼</div></div>
+          </div>
+        </div>
+
+        <!-- 分类管理 -->
+        <div class="set-card">
+          <h3>🏷️ 待办分类</h3>
+          <p class="desc">所有分类（含预设）都可改名、换色、删除；分类只对你自己可见，删除后名下待办保留原分类名。</p>
+          <div class="cat-list" id="catListSettings"></div>
+          <div class="cat-add-row">
+            <input type="text" class="form-input" id="newCatName2" placeholder="新分类名称" maxlength="20" />
+            <input type="color" class="cat-color-pick" id="newCatColor2" value="#2d6cdf" title="选择颜色" />
+            <button type="button" class="btn btn-sm" id="btnAddCat2">添加</button>
+          </div>
+        </div>
+
+        <!-- 注销账号（危险区） -->
+        <div class="set-card danger-zone">
+          <h3>⚠️ 注销账号</h3>
+          <p class="desc">注销将<b class="danger-text">永久删除</b>该账号的所有数据，包括你的待办、分类，以及已同步到部门月历的历史记录。此操作不可恢复，请谨慎。</p>
+          <div class="danger-row">
+            <input type="password" class="form-input" id="delPw" placeholder="输入登录密码以确认" autocomplete="off" />
+            <button type="button" class="btn btn-danger" id="btnDelAccount">注销账号</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===== 新建/编辑待办 弹窗 ===== -->
+  <div class="modal-overlay" id="todoModal" style="display:none">
+    <div class="modal">
+      <div class="modal-head">
+        <h3 id="todoModalTitle">新建待办</h3>
+        <button class="modal-close" type="button" id="todoModalClose">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="todoForm">
+          <input type="hidden" name="id" />
+          <div class="form-group">
+            <label class="form-label">待办名称 <span class="req">*</span></label>
+            <input type="text" class="form-input" name="name" placeholder="例如：3月增值税申报" maxlength="100" required />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">分类</label>
+              <select class="form-input" name="category_id" id="catSelect"></select>
+            </div>
+            <button type="button" class="btn btn-ghost btn-sm" id="btnManageCats">管理分类</button>
+          </div>
+          <div class="form-row2">
+            <div class="form-group">
+              <label class="form-label">开始日期</label>
+              <input type="date" class="form-input" name="start_date" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">截止日期 <span class="req">*</span></label>
+              <input type="date" class="form-input" name="due_date" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">循环</label>
+            <select class="form-input" name="recur_type" id="recurSelect">
+              <option value="">不循环</option>
+              <option value="week">每周循环</option>
+              <option value="month">每月循环</option>
+            </select>
+            <p class="field-hint" id="recurHint">勾选循环后，每次完成该项会按周期自动生成下一轮（默认从截止日期向后滚动），不会无限创建。</p>
+          </div>
+          <div class="form-row">
+            <div class="check-group">
+              <label class="check-label">
+                <input type="checkbox" name="sync_calendar" />
+                <span class="check-box"></span>
+                <span>同步到部门月历</span>
+              </label>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-ghost" id="todoCancelBtn">取消</button>
+        <button type="submit" form="todoForm" class="btn" id="todoSubmitBtn">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 分类管理 弹窗 ===== -->
+  <div class="modal-overlay" id="catModal" style="display:none">
+    <div class="modal modal-sm">
+      <div class="modal-head">
+        <h3>管理分类</h3>
+        <button class="modal-close" type="button" id="catModalClose">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="cat-list" id="catList"></div>
+        <div class="cat-add-row">
+          <input type="text" class="form-input" id="newCatName" placeholder="新分类名称" maxlength="20" />
+          <input type="color" class="cat-color-pick" id="newCatColor" value="#2d6cdf" title="选择颜色" />
+          <button type="button" class="btn btn-sm" id="btnAddCat">添加</button>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-ghost" id="catCancelBtn">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 月历待办详情 弹窗 ===== -->
+  <div class="modal-overlay" id="detailModal" style="display:none">
+    <div class="modal detail-modal">
+      <div class="modal-head">
+        <h3>待办详情</h3>
+        <button class="modal-close" type="button" id="detailClose">✕</button>
+      </div>
+      <div class="modal-body" id="detailBody"></div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-ghost" id="detailOkBtn">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast-wrap" id="toastWrap"></div>
+
+  <script>
+    window.CURRENT_USER_ID = "{{ user_id }}";
+    window.CURRENT_USER_NAME = "{{ user_name }}";
+  </script>
+  <script src="/static/app.js"></script>
+</body>
+</html>
